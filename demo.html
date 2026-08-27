@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reSHape — plain-words 3D modeling over JSCAD</title>
+<style>
+	:root { color-scheme: dark; }
+	html, body { margin: 0; padding: 0; background: #16161d; color: #f8f8f2; font-family: system-ui, sans-serif; }
+	.wrap { max-width: 880px; margin: 0 auto; padding: 28px 20px 48px; }
+	h1 { font-size: 28px; margin: 0 0 4px; }
+	h1 .sh { color: #50fa7b; }
+	p.tag { color: #8b8ba0; margin: 0 0 22px; }
+	a { color: #8be9fd; }
+	.frame { position: relative; border: 1px solid #44475a; border-radius: 8px; overflow: hidden; background: #36333a; }
+	.frame iframe { display: block; width: 100%; height: 540px; border: 0; }
+	.toolbar { display: flex; gap: 8px; margin: 14px 0 0; flex-wrap: wrap; }
+	button { font: 14px/1.2 system-ui, sans-serif; color: #f8f8f2; background: #44475a; border: 1px solid #6272a4; border-radius: 6px; padding: 9px 14px; cursor: pointer; }
+	button:hover { background: #6272a4; }
+	#out { font: 12px/1.5 'Fira Code', Consolas, monospace; background: #1b1b24; border: 1px solid #44475a; border-radius: 8px; padding: 12px 14px; margin-top: 14px; min-height: 40px; white-space: pre-wrap; color: #bd93f9; }
+	.foot { color: #6272a4; font-size: 13px; margin-top: 26px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+	<h1>re<span class="sh">SH</span>ape</h1>
+	<p class="tag">Plain-words 3D modeling over JSCAD — <code>box</code>, <code>ball</code>, <code>tube</code>, <code>extrude</code>… <a href="https://github.com/shuff57/reshape-3d">Source on GitHub</a>.</p>
+
+	<div class="frame">
+		<iframe id="preview" title="reSHape demo model" sandbox="allow-scripts allow-downloads"></iframe>
+	</div>
+
+	<div class="toolbar">
+		<button data-sketch="cube">Box + ball</button>
+		<button data-sketch="gasket">Drilled plate</button>
+		<button data-sketch="vase">Revolved vase</button>
+	</div>
+
+	<div id="out">host console output appears here…</div>
+
+	<p class="foot">
+		The sketch runs in a sandboxed iframe (opaque origin, no same-origin access) —
+		the same containment model shCode uses for student code. Drag to orbit, scroll
+		to zoom, Save for STL / 3MF / OBJ / SVG.
+	</p>
+</div>
+
+<script>
+// ---- demo sketches ---------------------------------------------------------
+var sketches = {
+	cube: [
+		'function main() {',
+		'  const base = box(40, 40, 12)',
+		'  const knob = sit(ball(10))',
+		'  return [base, knob]',
+		'}'
+	].join('\n'),
+
+	gasket: [
+		'function main() {',
+		'  const plate = extrude(4, disc(50))',
+		'  const holes = [',
+		'    extrude(4, translate([38, 0], disc(5))),',
+		'    extrude(4, translate([-38, 0], disc(5))),',
+		'    extrude(4, translate([0, 38], disc(5))),',
+		'  ]',
+		'  return subtract(plate, holes)',
+		'}'
+	].join('\n'),
+
+	vase: [
+		'function main() {',
+		'  const profile = poly([',
+		'    [0, 0], [18, 0], [22, 14], [14, 26],',
+		'    [10, 40], [13, 46], [0, 46],',
+		'  ])',
+		'  return revolve(profile, { segments: 64 })',
+		'}'
+	].join('\n')
+};
+
+// ---- base64url (matches runner.html's decoder, unicode-safe) ---------------
+function b64url(s) {
+	var bytes = new TextEncoder().encode(s), bin = '';
+	for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+	var b64 = btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+	return b64;
+}
+
+// ---- host wiring -----------------------------------------------------------
+function load(sketch) {
+	var frame = document.getElementById('preview');
+	frame.src = 'runner.html?r=' + Date.now() + '&code=' + b64url(sketches[sketch]);
+}
+
+// The runner pipes console/errors out (source: 'preview-console' /
+// 'preview-error') and reports render timing as 'reshape-rebuilt'.
+window.addEventListener('message', function(e) {
+	var d = e.data;
+	if (!d) return;
+	var out = document.getElementById('out');
+	if (d.source === 'preview-console') {
+		var line = (d.args || []).map(function(a) {
+			return typeof a === 'object' ? JSON.stringify(a) : String(a);
+		}).join(' ');
+		out.textContent += (d.type === 'error' ? '\n[error] ' : '\n[' + (d.type || 'log') + '] ') + line;
+	} else if (d.source === 'preview-error') {
+		out.textContent += '\n[error] ' + (d.error && d.error.message ? d.error.message : JSON.stringify(d.error));
+	} else if (d.source === 'reshape-rebuilt') {
+		if (d.failed) out.textContent += '\n[render] failed';
+		else out.textContent += '\n[render] ok in ' + (d.ms || 0) + 'ms';
+	}
+	if (out.textContent.length > 4000) out.textContent = out.textContent.slice(-4000);
+});
+
+document.querySelectorAll('button[data-sketch]').forEach(function(btn) {
+	btn.addEventListener('click', function() { load(btn.dataset.sketch); });
+});
+
+load('cube');
+</script>
+</body>
+</html>
