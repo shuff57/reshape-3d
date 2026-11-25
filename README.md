@@ -4,7 +4,7 @@
 (`@jscad/modeling` + `@jscad/regl-renderer`, both MIT, vendored) that gives 3D
 modeling **plain-words function names** for the classroom: `box`, `rect`,
 `disc`, `ball`, `tube`, `cone`, `ring`, `poly`, `extrude`, `revolve`, `turn`,
-`sit`. Built for the [shCode](https://github.com/shuff57/shCode) high-school
+`sit`. Built for the [seSHion](https://github.com/shuff57/seSHion) high-school
 CS course, where students model real 3D parts in a sandboxed iframe.
 
 ```js
@@ -74,10 +74,10 @@ as `reshape-rebuilt`. Student-facing parameter sliders post `reshape-params`.
 
 ## History
 
-reSHape began life as the in-app 3D runtime of the shCode course (originally
+reSHape began life as the in-app 3D runtime of the seSHion course (then called shCode; originally
 under `public/jscad/`, layer named "shCAD"). The public repo is a
-fresh-history extract of shCode's `public/reshape/`. The `svg.js` serializer
-was written for shCode's graded assignments and ships here unchanged.
+fresh-history extract of seSHion's `public/reshape/`. The `svg.js` serializer
+was written for seSHion's graded assignments and ships here unchanged.
 
 ## License
 
